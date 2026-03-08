@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['DM Sans', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
@@ -63,6 +63,16 @@ export default {
         },
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
+        "git-added": "hsl(var(--git-added))",
+        "git-modified": "hsl(var(--git-modified))",
+        "git-deleted": "hsl(var(--git-deleted))",
+        "tab-active": "hsl(var(--tab-active-bg))",
+        "tab-inactive": "hsl(var(--tab-inactive-bg))",
+        "activity-bar": "hsl(var(--activity-bar-bg))",
+        "activity-bar-fg": "hsl(var(--activity-bar-fg))",
+        "activity-bar-active": "hsl(var(--activity-bar-active))",
+        "status-bar": "hsl(var(--status-bar-bg))",
+        "status-bar-fg": "hsl(var(--status-bar-fg))",
       },
       borderRadius: {
         lg: "var(--radius)",
