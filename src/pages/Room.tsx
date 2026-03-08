@@ -19,6 +19,7 @@ import {
   Drawer, DrawerContent, DrawerTrigger
 } from '@/components/ui/drawer';
 import { Files, MessageSquare } from 'lucide-react';
+import LinkRepoModal from '@/components/LinkRepoModal';
 
 const COLORS = ['#7c3aed', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#06b6d4'];
 const LANG_MAP: Record<string, string> = {
