@@ -14,7 +14,151 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          room_id: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          room_id: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          room_id?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          created_at: string
+          current_code: string | null
+          id: string
+          is_active: boolean
+          language: string
+          name: string
+          owner_id: string
+          room_code: string
+        }
+        Insert: {
+          created_at?: string
+          current_code?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string
+          name: string
+          owner_id: string
+          room_code: string
+        }
+        Update: {
+          created_at?: string
+          current_code?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string
+          name?: string
+          owner_id?: string
+          room_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          code_snapshot: string | null
+          created_at: string
+          id: string
+          language: string | null
+          participant_count: number | null
+          room_id: string | null
+          room_name: string
+          user_id: string
+        }
+        Insert: {
+          code_snapshot?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          participant_count?: number | null
+          room_id?: string | null
+          room_name: string
+          user_id: string
+        }
+        Update: {
+          code_snapshot?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          participant_count?: number | null
+          room_id?: string | null
+          room_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
