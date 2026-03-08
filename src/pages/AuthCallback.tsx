@@ -10,15 +10,27 @@ export default function AuthCallback() {
       if (event === 'SIGNED_IN' && session) {
         const providerToken = session.provider_token;
         if (providerToken) {
-          // Non-blocking: store GitHub token then navigate
           supabase.from('github_tokens').upsert({
             user_id: session.user.id,
             access_token: providerToken,
             github_username: session.user.user_metadata?.user_name ?? null,
             updated_at: new Date().toISOString(),
-          }).then(() => navigate('/dashboard'));
+          }).then(() => {
+            // If opened as popup, notify parent and close
+            if (window.opener) {
+              window.opener.postMessage({ type: 'oauth-complete' }, '*');
+              window.close();
+            } else {
+              navigate('/dashboard');
+            }
+          });
         } else {
-          navigate('/dashboard');
+          if (window.opener) {
+            window.opener.postMessage({ type: 'oauth-complete' }, '*');
+            window.close();
+          } else {
+            navigate('/dashboard');
+          }
         }
       }
     });
