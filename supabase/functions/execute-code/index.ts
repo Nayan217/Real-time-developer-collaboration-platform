@@ -56,7 +56,7 @@ async function executeWithPiston(code: string, language: string) {
   const pistonLang = PISTON_LANGS[language];
   if (!pistonLang) throw new Error(`Unsupported language: ${language}`);
 
-  const res = await fetch('https://emkc.org/api/v2/piston/execute', {
+  const res = await fetch('https://piston-api.run/api/v2/execute', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
