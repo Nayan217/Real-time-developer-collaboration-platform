@@ -2,3 +2,12 @@ project_id = "rbacfhezlxwuhldhzoiv"
 
 [functions.execute-code]
 verify_jwt = false
+
+[functions.clone-repo]
+verify_jwt = false
+
+[functions.switch-branch]
+verify_jwt = false
+
+[functions.commit-and-push]
+verify_jwt = false
