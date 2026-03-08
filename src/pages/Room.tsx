@@ -480,6 +480,13 @@ const Room = () => {
           saved={saved}
         />
       </div>
+
+      <LinkRepoModal
+        open={showLinkRepo}
+        onClose={() => setShowLinkRepo(false)}
+        roomId={room.id}
+        onCloned={() => { fetchFiles(); setRoom({ ...room }); }}
+      />
     </div>
   );
 };
