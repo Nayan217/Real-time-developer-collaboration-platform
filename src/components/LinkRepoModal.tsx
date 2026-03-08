@@ -35,13 +35,13 @@ const LinkRepoModal = ({ open, onClose, roomId, onCloned }: LinkRepoModalProps) 
       }
 
       // Get user's GitHub token
-      const { data: tokenData } = await supabase
-        .from('github_tokens' as any)
+      const { data: tokenData } = await (supabase as any)
+        .from('github_tokens')
         .select('access_token')
         .eq('user_id', user!.id)
         .single();
 
-      if (!tokenData?.access_token) {
+      if (!(tokenData as any)?.access_token) {
         toast.error('Please connect GitHub first from the Dashboard');
         setLoadingBranches(false);
         return;
