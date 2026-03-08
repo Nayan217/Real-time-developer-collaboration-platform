@@ -60,19 +60,44 @@ const Dashboard = () => {
 
   const connectGithub = async () => {
     setConnectingGithub(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        scopes: 'repo read:user user:email',
-        redirectTo: window.location.origin + '/auth/callback',
-      },
-    });
-    if (error) {
-      console.error('OAuth error:', error);
-      toast.error(error.message);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          scopes: 'repo read:user user:email',
+          redirectTo: window.location.origin + '/auth/callback',
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        const isInIframe = window.self !== window.top;
+        if (isInIframe) {
+          const popup = window.open(data.url, 'github_oauth', 'width=600,height=700');
+          if (!popup) {
+            toast.error('Please allow popups for this site to sign in with GitHub.');
+            setConnectingGithub(false);
+            return;
+          }
+          const messageHandler = (event: MessageEvent) => {
+            if (event.data?.type === 'oauth-complete') {
+              popup?.close();
+              window.removeEventListener('message', messageHandler);
+              window.location.reload();
+            }
+          };
+          window.addEventListener('message', messageHandler);
+        } else {
+          window.location.href = data.url;
+        }
+      }
+    } catch (err: any) {
+      console.error('OAuth error:', err);
+      toast.error(err.message || 'Failed to connect GitHub');
       setConnectingGithub(false);
     }
-    // Do NOT navigate here — signInWithOAuth redirects automatically
   };
 
   return (
