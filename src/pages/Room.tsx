@@ -302,7 +302,17 @@ const Room = () => {
           />
         );
       case 'git':
-        return <GitPanel currentBranch={branch} onBranchChange={handleBranchChange} />;
+        return (
+          <GitPanel
+            roomId={room.id}
+            repoUrl={(room as any).repo_url || null}
+            currentBranch={branch}
+            activeFilePath={activeTab?.path || null}
+            activeFileContent={activeCode}
+            onBranchChange={handleBranchChange}
+            onLinkRepo={() => setShowLinkRepo(true)}
+          />
+        );
       case 'chat':
         return <ChatPanel roomId={room.id} />;
       default:
