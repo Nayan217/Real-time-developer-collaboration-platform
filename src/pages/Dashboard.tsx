@@ -56,56 +56,23 @@ const Dashboard = () => {
     checkGithub();
   }, [user]);
 
-  // Handle GitHub OAuth callback - store token
-  useEffect(() => {
-    if (!user) return;
-    const storeGithubToken = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.provider_token) return;
-
-      // Check if this is a GitHub login by checking provider
-      const providerRefreshToken = session.provider_refresh_token;
-      if (!providerRefreshToken && !session.provider_token) return;
-
-      // Fetch GitHub user info
-      try {
-        const ghRes = await fetch('https://api.github.com/user', {
-          headers: { 'Authorization': `token ${session.provider_token}` },
-        });
-        if (!ghRes.ok) return;
-        const ghUser = await ghRes.json();
-
-        // Upsert token
-        await supabase.from('github_tokens' as any).upsert({
-          user_id: user.id,
-          access_token: session.provider_token,
-          github_username: ghUser.login,
-          updated_at: new Date().toISOString(),
-        } as any);
-
-        setGithubConnected(true);
-        setGithubUsername(ghUser.login);
-        toast.success(`GitHub connected: ${ghUser.login}`);
-      } catch {
-        // Silently fail
-      }
-    };
-    storeGithubToken();
-  }, [user]);
+  // Token storage is now handled by AuthCallback page
 
   const connectGithub = async () => {
     setConnectingGithub(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: window.location.origin + '/dashboard',
-        scopes: 'repo read:user',
+        scopes: 'repo read:user user:email',
+        redirectTo: window.location.origin + '/auth/callback',
       },
     });
     if (error) {
+      console.error('OAuth error:', error);
       toast.error(error.message);
       setConnectingGithub(false);
     }
+    // Do NOT navigate here — signInWithOAuth redirects automatically
   };
 
   return (
