@@ -49,6 +49,7 @@ const Room = () => {
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const [branch, setBranch] = useState('main');
   const [mobileDrawer, setMobileDrawer] = useState(false);
+  const [showLinkRepo, setShowLinkRepo] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
   const isRemoteUpdate = useRef(false);
 
