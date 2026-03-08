@@ -47,9 +47,10 @@ const LinkRepoModal = ({ open, onClose, roomId, onCloned }: LinkRepoModalProps) 
         return;
       }
 
+      const token = (tokenData as any).access_token;
       const res = await fetch(`https://api.github.com/repos/${match[1]}/${match[2]}/branches`, {
         headers: {
-          'Authorization': `token ${(tokenData as any).access_token}`,
+          'Authorization': `token ${token}`,
           'Accept': 'application/vnd.github.v3+json',
         },
       });
