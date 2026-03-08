@@ -38,4 +38,12 @@ export interface RoomFile {
   language: string;
   version: number;
   updated_at: string;
+  github_sha?: string;
+}
+
+export interface RoomBranch {
+  id: string;
+  room_id: string;
+  branch_name: string;
+  last_commit_sha: string | null;
 }
