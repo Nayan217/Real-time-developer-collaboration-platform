@@ -270,11 +270,13 @@ const Room = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Branch change
+  // Branch change — GitPanel handles the edge function call itself
   const handleBranchChange = async (newBranch: string) => {
     setBranch(newBranch);
     if (room) {
       await supabase.from('rooms').update({ active_branch: newBranch } as any).eq('id', room.id);
+      // Re-fetch files after branch switch
+      setTimeout(() => fetchFiles(), 500);
     }
   };
 
