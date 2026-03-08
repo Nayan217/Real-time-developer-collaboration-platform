@@ -98,14 +98,16 @@ const Dashboard = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: window.location.origin + '/dashboard',
-        scopes: 'repo read:user',
+        scopes: 'repo read:user user:email',
+        redirectTo: window.location.origin + '/auth/callback',
       },
     });
     if (error) {
+      console.error('OAuth error:', error);
       toast.error(error.message);
       setConnectingGithub(false);
     }
+    // Do NOT navigate here — signInWithOAuth redirects automatically
   };
 
   return (
