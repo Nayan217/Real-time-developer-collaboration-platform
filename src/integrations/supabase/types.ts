@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      branch_locks: {
+        Row: {
+          branch_name: string | null
+          locked_by: string | null
+          room_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          branch_name?: string | null
+          locked_by?: string | null
+          room_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          branch_name?: string | null
+          locked_by?: string | null
+          room_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -60,25 +81,67 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          github_username: string | null
           id: string
           username: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          github_username?: string | null
           id: string
           username: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          github_username?: string | null
           id?: string
           username?: string
         }
         Relationships: []
       }
+      room_files: {
+        Row: {
+          content: string | null
+          file_path: string
+          id: string
+          language: string | null
+          room_id: string
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          content?: string | null
+          file_path: string
+          id?: string
+          language?: string | null
+          room_id: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          content?: string | null
+          file_path?: string
+          id?: string
+          language?: string | null
+          room_id?: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_files_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
+          active_branch: string | null
           created_at: string
           current_code: string | null
           id: string
@@ -86,9 +149,11 @@ export type Database = {
           language: string
           name: string
           owner_id: string
+          repo_url: string | null
           room_code: string
         }
         Insert: {
+          active_branch?: string | null
           created_at?: string
           current_code?: string | null
           id?: string
@@ -96,9 +161,11 @@ export type Database = {
           language?: string
           name: string
           owner_id: string
+          repo_url?: string | null
           room_code: string
         }
         Update: {
+          active_branch?: string | null
           created_at?: string
           current_code?: string | null
           id?: string
@@ -106,6 +173,7 @@ export type Database = {
           language?: string
           name?: string
           owner_id?: string
+          repo_url?: string | null
           room_code?: string
         }
         Relationships: [
