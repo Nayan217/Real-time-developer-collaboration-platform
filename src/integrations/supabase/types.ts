@@ -35,6 +35,27 @@ export type Database = {
         }
         Relationships: []
       }
+      github_tokens: {
+        Row: {
+          access_token: string
+          github_username: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          github_username?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          github_username?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -101,10 +122,40 @@ export type Database = {
         }
         Relationships: []
       }
+      room_branches: {
+        Row: {
+          branch_name: string
+          id: string
+          last_commit_sha: string | null
+          room_id: string
+        }
+        Insert: {
+          branch_name: string
+          id?: string
+          last_commit_sha?: string | null
+          room_id: string
+        }
+        Update: {
+          branch_name?: string
+          id?: string
+          last_commit_sha?: string | null
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_branches_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_files: {
         Row: {
           content: string | null
           file_path: string
+          github_sha: string | null
           id: string
           language: string | null
           room_id: string
@@ -114,6 +165,7 @@ export type Database = {
         Insert: {
           content?: string | null
           file_path: string
+          github_sha?: string | null
           id?: string
           language?: string | null
           room_id: string
@@ -123,6 +175,7 @@ export type Database = {
         Update: {
           content?: string | null
           file_path?: string
+          github_sha?: string | null
           id?: string
           language?: string | null
           room_id?: string
