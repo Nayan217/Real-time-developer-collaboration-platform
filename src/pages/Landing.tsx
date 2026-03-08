@@ -4,7 +4,7 @@ import { Code2, Users, Zap, MessageSquare, Play, Globe } from 'lucide-react';
 
 const features = [
   { icon: Code2, title: 'Real-Time Code Editing', desc: 'Collaborate on code simultaneously with live sync powered by Supabase Realtime.' },
-  { icon: Users, title: 'Presence Awareness', desc: 'See who's online with colored avatars and live cursor indicators.' },
+  { icon: Users, title: 'Presence Awareness', desc: 'See who is online with colored avatars and live cursor indicators.' },
   { icon: MessageSquare, title: 'Built-in Chat', desc: 'Communicate with your team without leaving the coding environment.' },
   { icon: Play, title: 'Code Execution', desc: 'Run your code instantly with support for JavaScript, Python, C++, and Java.' },
   { icon: Globe, title: 'Shareable Rooms', desc: 'Share a simple 6-character code to invite anyone to your session.' },
@@ -75,7 +75,7 @@ const Landing = () => {
 
       {/* Footer */}
       <footer className="border-t border-border/50 px-6 py-8 text-center text-sm text-muted-foreground">
-        <p>© 2026 DevSync. Built with Supabase & React.</p>
+        <p>&copy; 2026 DevSync. Built with Supabase &amp; React.</p>
       </footer>
     </div>
   );
