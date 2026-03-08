@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Plus, LogIn, LogOut, History, Code2 } from 'lucide-react';
+import { Plus, LogIn, LogOut, History, Code2, Github, Check } from 'lucide-react';
 import RoomCard from '@/components/RoomCard';
 import CreateRoomModal from '@/components/CreateRoomModal';
 import JoinRoomModal from '@/components/JoinRoomModal';
+import { toast } from 'sonner';
 
 interface Room {
   id: string;
@@ -24,6 +25,9 @@ const Dashboard = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
+  const [githubConnected, setGithubConnected] = useState(false);
+  const [githubUsername, setGithubUsername] = useState<string | null>(null);
+  const [connectingGithub, setConnectingGithub] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -36,7 +40,73 @@ const Dashboard = () => {
       if (data) setRooms(data);
     };
     fetchRooms();
+
+    // Check GitHub connection
+    const checkGithub = async () => {
+      const { data } = await supabase
+        .from('github_tokens' as any)
+        .select('github_username')
+        .eq('user_id', user.id)
+        .single();
+      if (data) {
+        setGithubConnected(true);
+        setGithubUsername((data as any).github_username);
+      }
+    };
+    checkGithub();
   }, [user]);
+
+  // Handle GitHub OAuth callback - store token
+  useEffect(() => {
+    if (!user) return;
+    const storeGithubToken = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.provider_token) return;
+
+      // Check if this is a GitHub login by checking provider
+      const providerRefreshToken = session.provider_refresh_token;
+      if (!providerRefreshToken && !session.provider_token) return;
+
+      // Fetch GitHub user info
+      try {
+        const ghRes = await fetch('https://api.github.com/user', {
+          headers: { 'Authorization': `token ${session.provider_token}` },
+        });
+        if (!ghRes.ok) return;
+        const ghUser = await ghRes.json();
+
+        // Upsert token
+        await supabase.from('github_tokens' as any).upsert({
+          user_id: user.id,
+          access_token: session.provider_token,
+          github_username: ghUser.login,
+          updated_at: new Date().toISOString(),
+        } as any);
+
+        setGithubConnected(true);
+        setGithubUsername(ghUser.login);
+        toast.success(`GitHub connected: ${ghUser.login}`);
+      } catch {
+        // Silently fail
+      }
+    };
+    storeGithubToken();
+  }, [user]);
+
+  const connectGithub = async () => {
+    setConnectingGithub(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: window.location.origin + '/dashboard',
+        scopes: 'repo read:user',
+      },
+    });
+    if (error) {
+      toast.error(error.message);
+      setConnectingGithub(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,6 +118,18 @@ const Dashboard = () => {
             <span className="text-lg font-bold">DevSync</span>
           </div>
           <div className="flex items-center gap-3">
+            {githubConnected ? (
+              <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs">
+                <Github className="h-3.5 w-3.5" />
+                {githubUsername}
+                <Check className="h-3 w-3 text-success" />
+              </span>
+            ) : (
+              <Button variant="outline" size="sm" onClick={connectGithub} disabled={connectingGithub}>
+                <Github className="mr-1 h-4 w-4" />
+                Connect GitHub
+              </Button>
+            )}
             <span className="text-sm text-muted-foreground">{profile?.username}</span>
             <Button variant="ghost" size="sm" onClick={() => navigate('/history')}>
               <History className="mr-1 h-4 w-4" /> History

@@ -19,6 +19,7 @@ import {
   Drawer, DrawerContent, DrawerTrigger
 } from '@/components/ui/drawer';
 import { Files, MessageSquare } from 'lucide-react';
+import LinkRepoModal from '@/components/LinkRepoModal';
 
 const COLORS = ['#7c3aed', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#06b6d4'];
 const LANG_MAP: Record<string, string> = {
@@ -48,6 +49,7 @@ const Room = () => {
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const [branch, setBranch] = useState('main');
   const [mobileDrawer, setMobileDrawer] = useState(false);
+  const [showLinkRepo, setShowLinkRepo] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
   const isRemoteUpdate = useRef(false);
 
@@ -268,11 +270,13 @@ const Room = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Branch change
+  // Branch change — GitPanel handles the edge function call itself
   const handleBranchChange = async (newBranch: string) => {
     setBranch(newBranch);
     if (room) {
       await supabase.from('rooms').update({ active_branch: newBranch } as any).eq('id', room.id);
+      // Re-fetch files after branch switch
+      setTimeout(() => fetchFiles(), 500);
     }
   };
 
@@ -300,7 +304,17 @@ const Room = () => {
           />
         );
       case 'git':
-        return <GitPanel currentBranch={branch} onBranchChange={handleBranchChange} />;
+        return (
+          <GitPanel
+            roomId={room.id}
+            repoUrl={(room as any).repo_url || null}
+            currentBranch={branch}
+            activeFilePath={activeTab?.path || null}
+            activeFileContent={activeCode}
+            onBranchChange={handleBranchChange}
+            onLinkRepo={() => setShowLinkRepo(true)}
+          />
+        );
       case 'chat':
         return <ChatPanel roomId={room.id} />;
       default:
@@ -468,6 +482,13 @@ const Room = () => {
           saved={saved}
         />
       </div>
+
+      <LinkRepoModal
+        open={showLinkRepo}
+        onClose={() => setShowLinkRepo(false)}
+        roomId={room.id}
+        onCloned={() => { fetchFiles(); setRoom({ ...room }); }}
+      />
     </div>
   );
 };
