@@ -6,25 +6,37 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
+        console.log('GitHub OAuth callback - session:', { 
+          hasProviderToken: !!session.provider_token,
+          username: session.user.user_metadata?.user_name 
+        });
+        
         const providerToken = session.provider_token;
         if (providerToken) {
-          supabase.from('github_tokens').upsert({
+          const { error } = await supabase.from('github_tokens').upsert({
             user_id: session.user.id,
             access_token: providerToken,
             github_username: session.user.user_metadata?.user_name ?? null,
             updated_at: new Date().toISOString(),
-          }).then(() => {
-            // If opened as popup, notify parent and close
-            if (window.opener) {
-              window.opener.postMessage({ type: 'oauth-complete' }, '*');
-              window.close();
-            } else {
-              navigate('/dashboard');
-            }
           });
+          
+          if (error) {
+            console.error('Failed to save GitHub token:', error);
+          } else {
+            console.log('GitHub token saved successfully');
+          }
+          
+          // If opened as popup, notify parent and close
+          if (window.opener) {
+            window.opener.postMessage({ type: 'oauth-complete' }, '*');
+            window.close();
+          } else {
+            navigate('/dashboard');
+          }
         } else {
+          console.warn('No provider_token in session');
           if (window.opener) {
             window.opener.postMessage({ type: 'oauth-complete' }, '*');
             window.close();
