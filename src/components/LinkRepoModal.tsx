@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,12 +14,25 @@ interface LinkRepoModalProps {
 }
 
 const LinkRepoModal = ({ open, onClose, roomId, onCloned }: LinkRepoModalProps) => {
-  const { user } = useAuth();
   const [repoUrl, setRepoUrl] = useState('');
   const [branches, setBranches] = useState<string[]>([]);
   const [selectedBranch, setSelectedBranch] = useState('main');
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [cloning, setCloning] = useState(false);
+
+  const getGitHubToken = async (): Promise<string | null> => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('github_access_token')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return profile?.github_access_token ?? null;
+  };
 
   const fetchBranches = async () => {
     if (!repoUrl.trim()) return;
