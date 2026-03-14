@@ -60,17 +60,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { data: tokenData } = await serviceClient
-      .from('github_tokens')
-      .select('access_token')
-      .eq('user_id', userId)
-      .single();
+    const { data: profileData, error: profileError } = await serviceClient
+      .from('profiles')
+      .select('github_access_token')
+      .eq('id', userId)
+      .maybeSingle();
 
-    if (!tokenData?.access_token) {
-      return new Response(JSON.stringify({ error: 'GitHub not connected. Please connect GitHub first.' }), { status: 400, headers: corsHeaders });
+    if (profileError) {
+      throw new Error(`Failed to fetch GitHub token: ${profileError.message}`);
     }
 
-    const ghToken = tokenData.access_token;
+    const ghToken = profileData?.github_access_token;
+    if (!ghToken) {
+      return new Response(JSON.stringify({ error: 'GitHub token missing — please disconnect and reconnect GitHub' }), { status: 400, headers: corsHeaders });
+    }
     const { owner, repo } = parseRepoUrl(repo_url);
     const ghHeaders = {
       'Authorization': `token ${ghToken}`,

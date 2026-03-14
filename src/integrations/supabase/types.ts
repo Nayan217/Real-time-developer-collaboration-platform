@@ -102,6 +102,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          github_access_token: string | null
           github_username: string | null
           id: string
           username: string
@@ -109,6 +110,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          github_access_token?: string | null
           github_username?: string | null
           id: string
           username: string
@@ -116,6 +118,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          github_access_token?: string | null
           github_username?: string | null
           id?: string
           username?: string

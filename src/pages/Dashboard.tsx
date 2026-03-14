@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Plus, LogIn, LogOut, History, Code2, Github, Check } from 'lucide-react';
+import { Plus, LogIn, LogOut, History, Code2, Github, Check, RotateCcw } from 'lucide-react';
 import RoomCard from '@/components/RoomCard';
 import CreateRoomModal from '@/components/CreateRoomModal';
 import JoinRoomModal from '@/components/JoinRoomModal';
@@ -28,9 +28,14 @@ const Dashboard = () => {
   const [githubConnected, setGithubConnected] = useState(false);
   const [githubUsername, setGithubUsername] = useState<string | null>(null);
   const [connectingGithub, setConnectingGithub] = useState(false);
+  const [tokenStatus, setTokenStatus] = useState<string>('checking...');
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setTokenStatus('not logged in');
+      return;
+    }
+
     const fetchRooms = async () => {
       const { data } = await supabase
         .from('rooms')
@@ -41,26 +46,39 @@ const Dashboard = () => {
     };
     fetchRooms();
 
-    // Check GitHub connection
     const checkGithub = async () => {
-      const { data } = await supabase
-        .from('github_tokens' as any)
-        .select('github_username')
-        .eq('user_id', user.id)
-        .single();
-      if (data) {
-        setGithubConnected(true);
-        setGithubUsername((data as any).github_username);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('github_access_token, github_username')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        setTokenStatus('❌ Could not check token status');
+        return;
       }
+
+      const hasToken = !!data?.github_access_token;
+      setGithubConnected(hasToken);
+      setGithubUsername(data?.github_username ?? null);
+      setTokenStatus(
+        hasToken
+          ? `✅ Token saved for @${data?.github_username ?? 'unknown'}`
+          : '❌ No token in DB — re-connect GitHub'
+      );
     };
+
     checkGithub();
   }, [user]);
 
-  // Token storage is now handled by AuthCallback page
-
-  const connectGithub = async () => {
+  const startGithubOAuth = async (forceReauth = false) => {
     setConnectingGithub(true);
+
     try {
+      if (forceReauth) {
+        await supabase.auth.signOut();
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
@@ -77,10 +95,10 @@ const Dashboard = () => {
         if (isInIframe) {
           const popup = window.open(data.url, 'github_oauth', 'width=600,height=700');
           if (!popup) {
-            toast.error('Please allow popups for this site to sign in with GitHub.');
-            setConnectingGithub(false);
+            toast.error('Please allow popups for this site to continue with GitHub.');
             return;
           }
+
           const messageHandler = (event: MessageEvent) => {
             if (event.data?.type === 'oauth-complete') {
               popup?.close();
@@ -88,6 +106,7 @@ const Dashboard = () => {
               window.location.reload();
             }
           };
+
           window.addEventListener('message', messageHandler);
         } else {
           window.location.href = data.url;
@@ -96,8 +115,17 @@ const Dashboard = () => {
     } catch (err: any) {
       console.error('OAuth error:', err);
       toast.error(err.message || 'Failed to connect GitHub');
+    } finally {
       setConnectingGithub(false);
     }
+  };
+
+  const connectGithub = async () => {
+    await startGithubOAuth(false);
+  };
+
+  const reconnectGithub = async () => {
+    await startGithubOAuth(true);
   };
 
   return (
@@ -110,18 +138,26 @@ const Dashboard = () => {
             <span className="text-lg font-bold">DevSync</span>
           </div>
           <div className="flex items-center gap-3">
-            {githubConnected ? (
-              <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs">
-                <Github className="h-3.5 w-3.5" />
-                {githubUsername}
-                <Check className="h-3 w-3 text-success" />
-              </span>
-            ) : (
-              <Button variant="outline" size="sm" onClick={connectGithub} disabled={connectingGithub}>
-                <Github className="mr-1 h-4 w-4" />
-                Connect GitHub
-              </Button>
-            )}
+            <div className="flex flex-col items-start gap-1">
+              <div className="flex items-center gap-2">
+                {githubConnected ? (
+                  <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs">
+                    <Github className="h-3.5 w-3.5" />
+                    {githubUsername}
+                    <Check className="h-3 w-3 text-success" />
+                  </span>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={connectGithub} disabled={connectingGithub}>
+                    <Github className="mr-1 h-4 w-4" />
+                    Connect GitHub
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={reconnectGithub} disabled={connectingGithub}>
+                  <RotateCcw className="mr-1 h-4 w-4" /> Reconnect GitHub
+                </Button>
+              </div>
+              <span className="text-[11px] text-muted-foreground">{tokenStatus}</span>
+            </div>
             <span className="text-sm text-muted-foreground">{profile?.username}</span>
             <Button variant="ghost" size="sm" onClick={() => navigate('/history')}>
               <History className="mr-1 h-4 w-4" /> History
