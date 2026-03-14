@@ -46,20 +46,13 @@ const LinkRepoModal = ({ open, onClose, roomId, onCloned }: LinkRepoModalProps) 
         return;
       }
 
-      // Get user's GitHub token
-      const { data: tokenData } = await (supabase as any)
-        .from('github_tokens')
-        .select('access_token')
-        .eq('user_id', user!.id)
-        .single();
-
-      if (!(tokenData as any)?.access_token) {
-        toast.error('Please connect GitHub first from the Dashboard');
+      const token = await getGitHubToken();
+      if (!token) {
+        toast.error('GitHub token missing — please disconnect and reconnect GitHub');
         setLoadingBranches(false);
         return;
       }
 
-      const token = (tokenData as any).access_token;
       const res = await fetch(`https://api.github.com/repos/${match[1]}/${match[2]}/branches`, {
         headers: {
           'Authorization': `token ${token}`,

@@ -6,48 +6,67 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        console.log('GitHub OAuth callback - session:', { 
-          hasProviderToken: !!session.provider_token,
-          username: session.user.user_metadata?.user_name 
-        });
-        
-        const providerToken = session.provider_token;
-        if (providerToken) {
-          const { error } = await supabase.from('github_tokens').upsert({
-            user_id: session.user.id,
-            access_token: providerToken,
-            github_username: session.user.user_metadata?.user_name ?? null,
-            updated_at: new Date().toISOString(),
-          });
-          
-          if (error) {
-            console.error('Failed to save GitHub token:', error);
-          } else {
-            console.log('GitHub token saved successfully');
-          }
-          
-          // If opened as popup, notify parent and close
-          if (window.opener) {
-            window.opener.postMessage({ type: 'oauth-complete' }, '*');
-            window.close();
-          } else {
-            navigate('/dashboard');
-          }
-        } else {
-          console.warn('No provider_token in session');
-          if (window.opener) {
-            window.opener.postMessage({ type: 'oauth-complete' }, '*');
-            window.close();
-          } else {
-            navigate('/dashboard');
-          }
-        }
+    let fallbackSubscription: { unsubscribe: () => void } | null = null;
+    let redirected = false;
+
+    async function saveTokenAndRedirect(session: any) {
+      const providerToken = session.provider_token;
+      const metadata = session.user.user_metadata ?? {};
+      const username =
+        metadata.user_name ??
+        metadata.preferred_username ??
+        session.user.email?.split('@')[0] ??
+        'user';
+
+      console.log('provider_token captured:', !!providerToken);
+
+      const { error } = await supabase.from('profiles').upsert(
+        {
+          id: session.user.id,
+          github_access_token: providerToken ?? null,
+          github_username: metadata.user_name ?? null,
+          avatar_url: metadata.avatar_url ?? null,
+          username,
+        },
+        { onConflict: 'id' }
+      );
+
+      if (error) {
+        console.error('Failed to save GitHub token:', error);
+      } else {
+        console.log('GitHub token saved successfully');
       }
+
+      if (window.opener) {
+        window.opener.postMessage({ type: 'oauth-complete' }, '*');
+        window.close();
+        return;
+      }
+
+      if (!redirected) {
+        redirected = true;
+        navigate('/dashboard');
+      }
+    }
+
+    // getSession() catches token in callback URL hash immediately
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        await saveTokenAndRedirect(session);
+        return;
+      }
+
+      // fallback for delayed auth event
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+        if (!nextSession) return;
+        await saveTokenAndRedirect(nextSession);
+        subscription.unsubscribe();
+      });
+
+      fallbackSubscription = subscription;
     });
 
-    return () => subscription.unsubscribe();
+    return () => fallbackSubscription?.unsubscribe();
   }, [navigate]);
 
   return (

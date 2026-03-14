@@ -45,14 +45,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { data: tokenData } = await serviceClient
-      .from('github_tokens')
-      .select('access_token')
-      .eq('user_id', userId)
-      .single();
+    const { data: profileData, error: profileError } = await serviceClient
+      .from('profiles')
+      .select('github_access_token')
+      .eq('id', userId)
+      .maybeSingle();
 
-    if (!tokenData?.access_token) {
-      return new Response(JSON.stringify({ error: 'GitHub not connected' }), { status: 400, headers: corsHeaders });
+    if (profileError) {
+      throw new Error(`Failed to fetch GitHub token: ${profileError.message}`);
+    }
+
+    const ghToken = profileData?.github_access_token;
+    if (!ghToken) {
+      return new Response(JSON.stringify({ error: 'GitHub token missing — please disconnect and reconnect GitHub' }), { status: 400, headers: corsHeaders });
     }
 
     // Get current file's github_sha
@@ -62,8 +67,6 @@ serve(async (req) => {
       .eq('room_id', room_id)
       .eq('file_path', file_path)
       .single();
-
-    const ghToken = tokenData.access_token;
     const { owner, repo } = parseRepoUrl(repo_url);
 
     // PUT to GitHub contents API

@@ -138,18 +138,26 @@ const Dashboard = () => {
             <span className="text-lg font-bold">DevSync</span>
           </div>
           <div className="flex items-center gap-3">
-            {githubConnected ? (
-              <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs">
-                <Github className="h-3.5 w-3.5" />
-                {githubUsername}
-                <Check className="h-3 w-3 text-success" />
-              </span>
-            ) : (
-              <Button variant="outline" size="sm" onClick={connectGithub} disabled={connectingGithub}>
-                <Github className="mr-1 h-4 w-4" />
-                Connect GitHub
-              </Button>
-            )}
+            <div className="flex flex-col items-start gap-1">
+              <div className="flex items-center gap-2">
+                {githubConnected ? (
+                  <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs">
+                    <Github className="h-3.5 w-3.5" />
+                    {githubUsername}
+                    <Check className="h-3 w-3 text-success" />
+                  </span>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={connectGithub} disabled={connectingGithub}>
+                    <Github className="mr-1 h-4 w-4" />
+                    Connect GitHub
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={reconnectGithub} disabled={connectingGithub}>
+                  <RotateCcw className="mr-1 h-4 w-4" /> Reconnect GitHub
+                </Button>
+              </div>
+              <span className="text-[11px] text-muted-foreground">{tokenStatus}</span>
+            </div>
             <span className="text-sm text-muted-foreground">{profile?.username}</span>
             <Button variant="ghost" size="sm" onClick={() => navigate('/history')}>
               <History className="mr-1 h-4 w-4" /> History
